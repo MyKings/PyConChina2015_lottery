@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PyCon China 2015 抽奖</title>
+</head>
+<body>
+{% load staticfiles %}
+<style type="text/css">
+* { margin: 0; padding: 0;}
+body { font-family: "Microsoft Yahei"; background-color: #15734b;}
+h1 { width: 900px; margin: 40px auto; font: 32px "Microsoft Yahei"; text-align: center; color: #fff;}
+.dowebok { width: 894px; height: 563px; margin: 0 auto; background-image: url(/static/images/s3_bg.png);}
+.rotary { position: relative; float: left; width: 504px; height: 504px; margin: 20px 0 0 20px;}
+.hand { position: absolute; left: 144px; top: 144px; width: 216px; height: 216px; cursor: pointer;}
+.list { float: right; width: 300px; padding-top: 44px;}
+.list strong { position: relative; left: -45px; display: block; height: 65px; line-height: 65px; font-size: 32px; color: #ffe63c;}
+.list h4 { height: 45px; margin: 20px 0 10px; line-height: 45px; font-size: 24px; color: #fff;}
+.list ul { line-height: 20px; list-style-type: none; font-size: 20px; color: #fff;}
+.list span { display: inline-block; width: 94px;}
+
+.wrap{ width:400px; margin:60px auto; font-family:"微软雅黑";}
+.show{ width:400px; height:250px; background-color:#ff3300; line-height:46px; text-align:center; padding-top:150px;color:#fff; font-size:38px; -moz-border-radius:200px; -webkit-border-radius:200px; border-radius:200px; background-image: -webkit-gradient(linear,0% 0%, 0% 100%, from(#FF9600), to(#F84000), color-stop(0.5,#fb6c00)); -moz-box-shadow:2px 2px 10px #BBBBBB; -webkit-box-shadow:2px 2px 10px #BBBBBB; box-shadow:2px 2px 10px #BBBBBB;}
+.btn a{ display:block;font-weight: bold; font-size: 28px;  width:320px; height:50px; margin:30px auto; text-align:center; line-height:50px; text-decoration:none; color:#fff; -moz-border-radius:25px; -webkit-border-radius:25px; border-radius:25px;}
+.btn a.start{ background:#80b600; }
+.btn a.start:hover{ background:#75a700;}
+.btn a.stop{ background:#00a2ff;}
+.btn a.stop:hover{ background:#008bdb;}
+#syr,#zjr{color:red}
+</style>
+
+</head>
+
+<body>
+<h1>PyCon China 2015 抽奖 @ 知道创宇 - MyKings</h1>
+<div style="width: 600px; margin: 0 auto;">
+
+	<div class="btn">
+			<a href="javascript:void(0)" class="start" id="btn">开始抽奖</a>
+	</div>
+	<div style=" text-align: center; color:#fff; font-weight: bold;font-size: 22px;">
+		 剩余:  <span id="syr"></span> 人，中奖: <span id="zjr"></span> 人
+	</div>
+	<div style="clear: both"></div>
+</div>
+<div class="dowebok">
+	<div class="rotary">
+	<div class="wrap">
+		<div class="show" id="show">点击按钮开始抽奖</div>
+
+	</div>
+	</div>
+	<div class="list">
+		<h4>中奖名单(<span id="count" style="color:red;width:auto">0 </span>人) </h4>
+		<ul id="winlist">
+
+			<!--<li>
+				<span>{{ user.name }}</span> <span>{{ user.tel }}</span>
+			</li>-->
+		</ul>
+	</div>
+</div>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript">
+
+	$(function(){
+
+		var pcount = 0;
+		var userAll = {{ userlist|safe }};
+		var num = userAll.length - 1;
+		var show = $("#show");
+		var btn = $("#btn");
+		var open = false;
+		var currentPerson = null;
+		function syr(){
+			$.get('/syr',function(data){
+				$("#syr").text(data);
+			});
+			$.get('/zjr', function(data){
+				$("#zjr").text(data);
+			})
+		}
+		function change(){
+			var randomVal = Math.round(Math.random() * num);
+			currentPerson = userAll[randomVal];
+			show.html(currentPerson.name+"<br/>"+currentPerson.tel);
+		}
+
+		function run(){
+			if(!open){
+				timer=setInterval(change,30);
+				btn.removeClass('start').addClass('stop').text('停止');
+				open = true;
+			}else{
+				clearInterval(timer);
+				btn.removeClass('stop').addClass('start').text('开始抽奖');
+				open = false;
+				if (currentPerson) {
+						$.get("/update", {uid:currentPerson.id}, function( data ) {
+					 	if(data=="1"){
+							$("#winlist").append("<li><span>" + currentPerson.name + "</span><span>" + currentPerson.tel + "</span></li>")
+							$.get("/get",function(data){
+								userAll = eval(data);
+								num = userAll.length - 1;
+								console.log(num)
+								$("#count").text(++pcount);
+								syr();
+							});
+						}
+						});
+					}
+			}
+		}
+		syr()
+		btn.click(function(){run();})
+
+	});
+
+	</script>
+</body>
+</html>
